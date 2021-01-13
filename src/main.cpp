@@ -1,67 +1,82 @@
+#include <Arduino_FreeRTOS.h>
 #include <Arduino.h>
+
+static void meTask1(void* pvParameters);
+static void meTask2(void* pvParameters);
+static void meTask3(void* pvParameters);
+static void idleTask(void* pvParameters);
 /**
- * @brief Initializations and defines
- * Used Pin 4 and 5 on Uno
+ * @brief Setup Fn so that pins and serial monitor are initialized.
+ * Also creates tasks for scope of this project.
  */
-#define ledPinSlow 4
-#define ledPinFast 5
-
-uint16_t currentTime;
-long ledSlowRate = 1000;
-boolean ledSlowState = LOW;
-long ledFastRate = 250;
-boolean ledFastState = LOW;
-
-/**
- * @brief Get Current starting time for each LED
- * Fast LED timestamp = previousTimeFast
- * Slow LED timestamp = previousTimeSlow
- */
-unsigned long previousTimeSlow = millis();
-unsigned long previousTimeFast = millis();
-
 void setup()
 {
-  pinMode(ledPinSlow, OUTPUT);
-  pinMode(ledPinFast, OUTPUT);
+  Serial.begin(9600);
+  Serial.println("Setup Initialized!");
+  for (int i = 4; i < 8; i++)
+  {
+    pinMode(i, OUTPUT);
+    digitalWrite(i, LOW);
+  }
+  
+  /**
+   * Task Creation 
+   */
+  xTaskCreate(meTask1, "Task1", 100, NULL, 1, NULL);
+  xTaskCreate(meTask2, "Task2", 100, NULL, 2, NULL);
+  xTaskCreate(meTask3, "Task3", 100, NULL, 3, NULL);
+  xTaskCreate(idleTask, "Task0", 100, NULL, 0, NULL);
+  
 }
 
-
-/**
- * @brief Entering the super loop structure.
- * Please refer to flowchart on project Readme.md
- */
 void loop()
+
 {
-  currentTime = millis();
+}
 
-  if (currentTime - previousTimeSlow > ledSlowRate)
+static void meTask1(void* pvParameters)
+{
+  while(1)
   {
-    if (ledSlowState == LOW)
-    {
-      ledSlowState = HIGH;
-      digitalWrite(ledPinSlow, ledSlowState);
-    }
-    else
-    {
-      ledSlowState = LOW;
-      digitalWrite(ledPinSlow, ledSlowState); // redundant, only added in for completeness and readability
-    }
-    previousTimeSlow = currentTime;
+    digitalWrite(4,HIGH);
+    Serial.println("In Task1");
+    vTaskDelay(250/portTICK_PERIOD_MS);
+    digitalWrite(4,LOW);
+    vTaskDelay(250/portTICK_PERIOD_MS);
+    Serial.println("LED off") ;
   }
+}
 
-  if (currentTime - previousTimeFast > ledFastRate)
+static void meTask2(void* pvParameters)
+{
+  while(1)
   {
-    if (ledFastState == LOW)
-    {
-      ledFastState = HIGH;
-      digitalWrite(ledPinFast, ledFastState);
-    }
-    else
-    {
-      ledFastState = LOW;
-      digitalWrite(ledPinFast, ledFastState); // redundant, only added in for completeness and readability
-    }
-    previousTimeFast = currentTime;
+    digitalWrite(5,HIGH); 
+    Serial.println("In Task2");
+    vTaskDelay(500/portTICK_PERIOD_MS);
+    digitalWrite(5, LOW);
+    vTaskDelay(500/portTICK_PERIOD_MS);
+  }
+}
+
+static void meTask3(void* pvParameters)
+{
+  while(1)
+  {
+    digitalWrite(6,HIGH);
+    Serial.println("In Task3");
+    vTaskDelay(1000/portTICK_PERIOD_MS); 
+    digitalWrite(6, LOW);
+    vTaskDelay(1000/portTICK_PERIOD_MS);
+  }
+}
+
+static void idleTask(void* pvParameters)
+{
+  while(1)
+  {
+    digitalWrite(7,HIGH);
+    Serial.println("In Idle now");
+    vTaskDelay(50/portTICK_PERIOD_MS); 
   }
 }
